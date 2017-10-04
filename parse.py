@@ -167,18 +167,20 @@ class LinesHolder:
         self.nextLine()
     def getCurrent(self):
         # type: () -> str
+        """Returns the current line (or None if past the end)."""
         if not self.hasNext():
             return ''
         return self.current
     def nextLine(self):
         # type: () -> None
+        """Move to the next line."""
         try:
             self.current = self.lines.next()
         except StopIteration:
             self.current = None
     def setCurrent(self, line):
         # type: (str) -> None
-        """Go to next line if passed '', otherwise change the current line."""
+        """Go to next line if given '', otherwise change the current line."""
         if line == '':
             self.nextLine()
         else:
