@@ -14,6 +14,11 @@ searchable in better ways than just fulltext search, but this can be
 useful for other forms of knowledge (eg. your book collection, class
 notes, biology notes, etc).
 
+## Dependencies
+
+* [MarkupSafe](https://pypi.python.org/pypi/MarkupSafe) for safe html templates.
+* [typing](http://mypy.readthedocs.io/en/latest/python2.html). Use `mypy --py2 *.py` to typecheck files.
+
 ## Current status
 
 Design / early development

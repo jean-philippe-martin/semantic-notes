@@ -24,7 +24,7 @@ If you want the inner text to start with a space then add a second
 space after the tag-delimiting one.
 
 The output is a Tagged. Each Tagged contains the name of the tag,
-and a list of either string (with the contents), or Tagged.
+and a list of either basestring (with the contents), or Tagged.
 
 For example:
 

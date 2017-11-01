@@ -17,13 +17,20 @@ def strings(lines):
     title=''
     ready=False
     for l in lines:
-        if len(l)>2 and l[0]=='[' and l[-1]==']':
+        if len(l)>2 and l[0]=='[' and (l[-1]==']' or l.endswith(']\n')):
             if ready:
                 yield (title, ret)
-            title=l[1:-1]
+            title=l.strip()[1:-1]
             ret=[]
             ready=True
         else:
             ret.append(l)
     if ready:
         yield (title, ret)
+
+def file(filename):
+    # type: (str) -> Iterable[Tuple[str, List[str]]]
+    """File name -> (title, lines) sections."""
+    with open(filename, 'rt') as f:
+        # we force evaluation while the file is still open
+        return list(strings(f))
