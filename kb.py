@@ -95,4 +95,15 @@ class KB(dict):
       for b in a:
         if not self.aka.has_key(b.lower()):
           self.aka[b.lower()] = k
+
+def unique(value):
+  """Check that there is only one value in the list, and return it.
+
+  This is handy in the context of KB, where everything's a list but
+  it's common to expect that there's only one value. 
+  """
+  if not value: return None
+  if len(value)!=1:
+    raise ValueError('Expected a single value, got multiple (%s)' % len(value))
+  return value[0]
  

@@ -17,7 +17,9 @@ notes, biology notes, etc).
 ## Dependencies
 
 * [MarkupSafe](https://pypi.python.org/pypi/MarkupSafe) for safe html templates.
-* [typing](http://mypy.readthedocs.io/en/latest/python2.html). Use `mypy --py2 *.py` to typecheck files.
+* [Pint](http://pint.readthedocs.io/en/0.8.1/) for units and their conversions.
+* [typing](http://mypy.readthedocs.io/en/latest/python2.html). Use `mypy --py2 --ignore-missing-imports *.py` to typecheck files.
+
 
 ## Current status
 

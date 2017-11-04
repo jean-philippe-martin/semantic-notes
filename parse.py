@@ -52,9 +52,12 @@ So for example:
 """
 from abc import abstractmethod
 from abc import ABCMeta
+import pint
 from typing import List, Iterable, Dict, Set, Union, Any
 import re
 
+units = pint.UnitRegistry()
+units.define('earth_mass = 5.972E24 * kg')
 
 ## User interface
 
@@ -101,6 +104,13 @@ def _min_non_negative(a,b):
     if b<0: return a
     return min(a, b)
 
+def _unit_perhaps(txt):
+    try:
+        txt = units.parse_expression(txt)
+    except:
+        pass
+    return txt
+
 def _parse(lh, mytag, parens):
     # type: (LinesHolder, str, bool) -> Tagged
     """Parse the text, one tag at a time, recursively."""
@@ -118,17 +128,17 @@ def _parse(lh, mytag, parens):
                     parenDepth-=1
                     if (parenDepth==0):
                         # found the end
-                        if x>0: ret.append(s[:x])
+                        if x>0: ret.append(_unit_perhaps(s[:x]))
                         lh.setCurrent(s[x+1:])
                         return Tagged(mytag, ret, paren=True)
                 if (s[x]=='('):
                     parenDepth += 1
         if (i<0):
-            ret.append(s)
+            ret.append(_unit_perhaps(s))
             lh.nextLine()
             continue
         if (i>0):
-            txt=s[:i]
+            txt=_unit_perhaps(s[:i])
             ret.append(txt)
             lh.setCurrent(s[i:])
             continue

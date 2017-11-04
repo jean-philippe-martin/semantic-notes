@@ -1,0 +1,17 @@
+[Mercury]
+`isa(planet)
+`diameter(4900 km)
+`mass(0.055 earth_mass)
+
+[Earth]
+`isa(planet)
+`aka(the earth)
+`diameter(12800 km)
+`mass(5.972E24 kg)
+
+
+[Mars]
+`isa(planet)
+`aka(the red planet)
+`diameter(6800 km)
+`mass(0.107 earth_mass)

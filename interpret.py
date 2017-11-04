@@ -43,16 +43,20 @@ class TagsAreWebOK(InfoToken):
     __metaclass__ = ABCMeta
     def __init__(self, page):
       self._kb={}
-      if isinstance(page, basestring):
+      if not isinstance(page, Tagged):
         self._tag=''
-        self._text=page
-        self._html=page
+        self._text=str(page)
+        self._html=str(page)
         self._value=page
       else:
         self._tag = page.tag
         kids = [TagsAreWebOK(x) for x in page.contents]
         self._text = ''.join([k.text() for k in kids]).replace('\n', ' ')
-        self._value = self._text
+        if len(kids)==1:
+          # special case, keep the value
+          self._value = kids[0]._value
+        else:
+          self._value = self._text
         self._html = u''.join([k.html() for k in kids]).replace(u'\n', u' ')
         self._kb={k._tag: [k._value] for k in kids if k._tag}
         if self._tag:
