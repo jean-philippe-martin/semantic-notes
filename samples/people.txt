@@ -1,0 +1,9 @@
+[Joe]
+`isa(man)
+`wife(Jill)
+
+[Jill]
+`son(Bob)
+
+[Bob]
+`mother(Jill)
