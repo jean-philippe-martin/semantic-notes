@@ -19,6 +19,13 @@ notes, biology notes, etc).
 * [MarkupSafe](https://pypi.python.org/pypi/MarkupSafe) for safe html templates.
 * [Pint](http://pint.readthedocs.io/en/0.8.1/) for units and their conversions.
 * [typing](http://mypy.readthedocs.io/en/latest/python2.html). Use `mypy --py2 --ignore-missing-imports *.py` to typecheck files.
+* [WebApp2](https://webapp2.readthedocs.io/en/latest/) and [Paste](https://pypi.python.org/pypi/Paste) for serving web pages.
+
+To install them all:
+
+```
+pip install webapp2 Paste webob typing Pint MarkupSafe
+```
 
 
 ## Current status
