@@ -1,9 +1,7 @@
 #!/bin/bash
 set -e
 
-for x in test*.py; do
-  python $x
-done
+python -m unittest discover
 
 # mypy can't find pint from the virtualenv, but that's OK,
 # we're not typechecking pint itself.

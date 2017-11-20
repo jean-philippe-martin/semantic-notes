@@ -1,8 +1,14 @@
 # "Knowledge Base"
 from typing import List, Iterable, Dict, Set, Union, Any
+from collections import defaultdict
 
 # Check the type annotations like this:
 # mypy --py2 graph.py
+
+# The type that goes into a KB, and what a KB
+# still mostly feels like (modulo the few added features).
+KBDict = Dict[str, Dict[str, List[Any]]]
+
 
 class KB(dict):
   """A very simple "knowledge base".
@@ -36,7 +42,7 @@ class KB(dict):
   """
 
   def __init__(self, dict_of_dict):
-    # type: (Dict[str, Dict[str, List[Any]]]) -> None
+    # type: (KBDict) -> None
     self.aka = {}  # type: Dict[str, str]
     self.update(dict_of_dict)
     self._fill_aka()
@@ -77,6 +83,11 @@ class KB(dict):
     if not page: return default
     return page.get(attribute, default)
   
+  def get_unique_attribute(self, key, attribute, default=None):
+    # type: (str, str, List[Any]) -> Any
+    """kb[key][attribute][0], or None if either's missing."""
+    return unique(self.get_attribute(key,attribute,default))
+
   def _fill_aka(self):
     # type: () -> None
     for k,v in dict.items(self):
@@ -96,8 +107,37 @@ class KB(dict):
         if not self.aka.has_key(b.lower()):
           self.aka[b.lower()] = k
 
+
+KB_or_Dict = Union[KB, KBDict]
+
+
+def merge(kblist):
+  # type: (List[KBDict]) -> KBDict
+  """Merges the dicts together into a single one by appending all the keys.
+
+  Example:
+  >>> a = {'mars': {'isa': ['planet']}}
+  >>> b = {'mars': {'color': ['red']}}
+  >>> sorted(merge([a,b])['mars'].keys())
+  ['color', 'isa']
+
+  """
+  ret = {}  # type: KBDict
+  for kb in kblist:
+    for k, v in kb.items():
+      if k not in ret:
+        ret[k] = defaultdict(list)
+      for attrib, values in v.items():
+        ret[k][attrib] += values
+  return ret
+
+
 def unique(value):
   """Check that there is only one value in the list, and return it.
+
+  >>> kb = KB({'John':{'eye_color': ['blue']}})
+  >>> unique(kb.get_attribute('John', 'eye_color'))
+  'blue'
 
   This is handy in the context of KB, where everything's a list but
   it's common to expect that there's only one value. 

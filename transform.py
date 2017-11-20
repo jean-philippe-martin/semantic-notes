@@ -11,9 +11,8 @@ data file, so instead we can use transforms to add them in later.
 
 from collections import namedtuple
 from kb import KB
+from kb import KB_or_Dict
 from typing import List, Iterable, Dict, Set, Union, Any, Tuple, Callable, NamedTuple
-
-KB_or_Dict = Union[KB, Dict[str, Dict[str, List[Any]]]]
 
 def addvalue(kb, page, attribute, newvalue):
   # type: (KB_or_Dict, str, str, Any) -> None

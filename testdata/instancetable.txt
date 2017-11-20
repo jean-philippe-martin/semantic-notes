@@ -1,0 +1,17 @@
+[Planet]
+
+`aka(big ball of dirt)
+
+Planets are big balls of dirt that orbit a star.
+
+`instance-table Planets I like
+name, diameter
+venus, 12100 km
+earth, 12800 km
+mars, 6800 km
+`/ 
+
+
+[earth]
+
+`color(blue)

@@ -4,6 +4,7 @@ from parse import units
 import unittest
 import graph
 from kb import unique
+from parse import unit_perhaps
 
 class TestPlanets(unittest.TestCase):
   "Tests for parse.py."
@@ -74,6 +75,26 @@ class TestPlanets(unittest.TestCase):
 
   def test_table(self):
     p,kb=interpret.file('samples/table.txt')
+    html = p['table demo'].html()
+    self.assertTrue('<td>' in html)
+    self.assertTrue('<th>' in html)
+    self.assertTrue('<table' in html)
 
+  def test_instance_table(self):
+    p,kb=interpret.file('testdata/instancetable.txt')
+    html = p['Planet'].html()
+    self.assertTrue('<td>' in html)
+    self.assertTrue('<th>' in html)
+    self.assertTrue('<table' in html)
+    self.assertTrue('earth' in kb)
+    self.assertTrue('aka' in kb['planet'])
+    # "Planet" is not a planet (it's a category).
+    self.assertFalse(kb.get_unique_attribute('Planet', 'isa'))
+    self.assertTrue(kb.get_unique_attribute('earth', 'isa') == 'Planet')
+    # units are parsed correctly
+    self.assertTrue(unit_perhaps('12000 km') < kb['earth']['diameter'][0] < unit_perhaps('13000 km'))
+    # the info is merged with that section's
+    self.assertTrue(kb.get_unique_attribute('earth', 'color') == 'blue')
+    
 if __name__ == '__main__':
     unittest.main()

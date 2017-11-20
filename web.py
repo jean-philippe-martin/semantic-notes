@@ -20,12 +20,12 @@ import sys
 
 
 
-class Hello(webapp2.RequestHandler):    
+class Hello(webapp2.RequestHandler):
     def get(self):
         self.response.write('<br/><a href="get/">List of pages</a>')
 
 
-class Static(webapp2.RequestHandler):    
+class Static(webapp2.RequestHandler):
     def get(self):
         self.response.headers['Content-type']="text/css"
         self.response.write("""
@@ -46,7 +46,7 @@ def load(fname):
     pages,kb=interpret.file(fname)
 
 
-class Get(webapp2.RequestHandler):    
+class Get(webapp2.RequestHandler):
     def get(self, page=None):
         if page:
             self.response.write(pages[page].html())

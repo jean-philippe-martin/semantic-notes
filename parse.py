@@ -96,6 +96,17 @@ class Tagged:
             return '`'+self.tag + '(' + inner + ')'
         return '`%s %s`/ ' % (self.tag, inner)
 
+
+def unit_perhaps(txt):
+    # type: (str) -> Any
+    """Return a Pint Quantity if we recognize a unit, or pass through unchanged."""
+    try:
+        txt = units.parse_expression(txt)
+    except:
+        pass
+    return txt
+
+
 ## Internal implementation
 
 def _min_non_negative(a,b):
@@ -103,13 +114,6 @@ def _min_non_negative(a,b):
     if a<0: return b
     if b<0: return a
     return min(a, b)
-
-def _unit_perhaps(txt):
-    try:
-        txt = units.parse_expression(txt)
-    except:
-        pass
-    return txt
 
 def _parse(lh, mytag, parens):
     # type: (LinesHolder, str, bool) -> Tagged
@@ -128,17 +132,17 @@ def _parse(lh, mytag, parens):
                     parenDepth-=1
                     if (parenDepth==0):
                         # found the end
-                        if x>0: ret.append(_unit_perhaps(s[:x]))
+                        if x>0: ret.append(unit_perhaps(s[:x]))
                         lh.setCurrent(s[x+1:])
                         return Tagged(mytag, ret, paren=True)
                 if (s[x]=='('):
                     parenDepth += 1
         if (i<0):
-            ret.append(_unit_perhaps(s))
+            ret.append(unit_perhaps(s))
             lh.nextLine()
             continue
         if (i>0):
-            txt=_unit_perhaps(s[:i])
+            txt=unit_perhaps(s[:i])
             ret.append(txt)
             lh.setCurrent(s[i:])
             continue
