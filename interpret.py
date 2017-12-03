@@ -109,17 +109,18 @@ def split_all(contents, substring='\n'):
   ret=[]  # type: List[List[Any]]
   current = []  # type: List[Any]
   for x in contents:
-    if isinstance(x, str) or isinstance(x, unicode):
+    if isinstance(x, str) or isinstance(x, unicode):      
       idx = x.find(substring)
       if idx<0:
         current.append(x)
         continue
       # found!
-      upto = x[:idx]
-      if upto: current.append(upto)
-      ret.append(current)
-      current=[]
-      current.append(x[idx+len(substring):])
+      split = x.split(substring)
+      for notlast in split[:-1]:
+        current.append(notlast)
+        ret.append(current)
+        current=[]
+      current.append(split[-1])
     else:
       current.append(x)
   if current: ret.append(current)
@@ -231,7 +232,9 @@ class InstanceTable(Table):
             break
           ret[row_name]={'isa': [self._page]}
           continue
-        ret[row_name][headers[i]] = [info(col).value()]
+        if not headers[i] in ret[row_name]:
+          ret[row_name][headers[i]] = []
+        ret[row_name][headers[i]] += [info(col).value()]
     return ret
     
 

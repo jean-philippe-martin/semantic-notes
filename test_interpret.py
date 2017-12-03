@@ -62,16 +62,19 @@ class TestPlanets(unittest.TestCase):
     ret = interpret.split_all(foo, '\n')
     b=ret[0]
     a=ret[1]
-    self.assertEquals(b, ['abc', 12])
+    self.assertEquals(b, ['abc', 12, ''])
     self.assertEquals(a, [''])
     
   def test_split_all_multi(self):
     foo=['abc', 12, 'd\ne', 13, '\n', 14]
     parts = interpret.split_all(foo, '\n')
     self.assertEquals(parts[0], ['abc', 12, 'd'])
-    self.assertEquals(parts[1], ['e', 13])
+    self.assertEquals(parts[1], ['e', 13, ''])
     self.assertEquals(parts[2], ['', 14])
     self.assertEquals(len(parts), 3)
+    foo=['', 'name,parent,parent']
+    parts = interpret.split_all(foo, ',')
+    self.assertEquals(parts, [['','name'], ['parent'], ['parent']])
 
   def test_table(self):
     p,kb=interpret.file('samples/table.txt')
@@ -93,8 +96,9 @@ class TestPlanets(unittest.TestCase):
     self.assertTrue(kb.get_unique_attribute('earth', 'isa') == 'Planet')
     # units are parsed correctly
     self.assertTrue(unit_perhaps('12000 km') < kb['earth']['diameter'][0] < unit_perhaps('13000 km'))
-    # the info is merged with that section's
     self.assertTrue(kb.get_unique_attribute('earth', 'color') == 'blue')
+    # the info is merged with that section's
+    self.assertTrue(kb.get_unique_attribute('earth', 'mostly') == 'water')
     
 if __name__ == '__main__':
     unittest.main()

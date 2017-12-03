@@ -147,3 +147,13 @@ def unique(value):
     raise ValueError('Expected a single value, got multiple (%s)' % len(value))
   return value[0]
  
+def unlist(value_or_list):
+  x=value_or_list
+  if isinstance(x, str) or isinstance(x, unicode):
+    return x
+  try:
+    if len(x)==1:
+      return x[0]
+  except:
+    pass
+  return x

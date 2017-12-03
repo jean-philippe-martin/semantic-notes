@@ -17,6 +17,7 @@ import interpret
 from paste import httpserver
 from markupsafe import Markup
 import sys
+from kb import unlist
 
 
 
@@ -46,10 +47,26 @@ def load(fname):
     pages,kb=interpret.file(fname)
 
 
+def linkify(word):
+    if word in pages or word in kb:
+        return Markup('<a href="{0}">{0}</a></li>\n').format(word)
+    return word
+
 class Get(webapp2.RequestHandler):
     def get(self, page=None):
-        if page:
-            self.response.write(pages[page].html())
+        if page and page in pages or page in kb:
+            self.response.write(Markup('<h1>{0}</h1>\n').format(page))
+            boom = None
+            if page in pages: 
+                boom=pages[page]
+                self.response.write(boom.html())
+            ks = set(kb.get(page, {}).keys())
+            if boom: ks -= set(boom.kb().keys())
+            if ks:
+                self.response.write('<ul>\n')
+                for k in ks:
+                    self.response.write(Markup('<li>{0}: {1}</li>\n').format(k, linkify(unlist(kb[page][k]))))
+                self.response.write('</ul>\n')
         else:
             # show an index
             self.response.write('<ul>\n')

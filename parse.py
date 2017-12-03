@@ -56,7 +56,7 @@ import pint
 from typing import List, Iterable, Dict, Set, Union, Any
 import re
 
-units = pint.UnitRegistry()
+units = pint.UnitRegistry('data/units_en.txt')
 units.define('earth_mass = 5.972E24 * kg')
 
 ## User interface

@@ -5,13 +5,13 @@
 Planets are big balls of dirt that orbit a star.
 
 `instance-table Planets I like
-name, diameter
-venus, 12100 km
-earth, 12800 km
-mars, 6800 km
+name, diameter, color
+venus, 12100 km, green
+earth, 12800 km, blue
+mars, 6800 km, red
 `/ 
 
 
 [earth]
 
-`color(blue)
+`mostly(water)
