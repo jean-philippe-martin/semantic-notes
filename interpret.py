@@ -53,7 +53,7 @@ class InfoToken(object):
         raise NotImplemented()
     @abstractmethod
     def html(self):
-        """html respresentation, eg. for putting on a web page."""
+        """html representation, eg. for putting on a web page."""
         raise NotImplemented()
     @abstractmethod
     def value(self):
@@ -270,7 +270,14 @@ class TagsAreWebOK(InfoToken):
         self._kb[''][self._tag].append(self._value)
         if self._tag:
           self._text = self._tag + ': ' + self._text
-          self._html = Markup(u'<%s>{0}</%s>' % (self._tag, self._tag)).format(soft_unicode(self._html))
+          if self._tag == 'img':
+            # image, special case.
+            # static content is held in "static/"
+            # (as opposed to "data" which holds data we don't serve)
+            self._html = Markup(u'<%s width="100%%" src="/static/{0}">' % (self._tag)).format(soft_unicode(self._html))
+          else:
+            # normal case
+            self._html = Markup(u'<%s>{0}</%s>' % (self._tag, self._tag)).format(soft_unicode(self._html))
     def text(self):
       return self._text
     def html(self):

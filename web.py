@@ -15,8 +15,12 @@ Currently serving:
 import webapp2
 import interpret
 from paste import httpserver
+from paste.urlparser import StaticURLParser
+from paste.fileapp import DirectoryApp
+from paste.cascade import Cascade
 from markupsafe import Markup
 import sys
+import os
 from kb import unlist
 
 
@@ -65,7 +69,7 @@ class Get(webapp2.RequestHandler):
             if ks:
                 self.response.write('<ul>\n')
                 for k in ks:
-                    self.response.write(Markup('<li>{0}: {1}</li>\n').format(k, linkify(unlist(kb[page][k]))))
+                    self.response.write(Markup('<li>{0}: {1}</li>\n').format(k, linkify(str(unlist(kb[page][k])))))
                 self.response.write('</ul>\n')
         else:
             # show an index
@@ -87,8 +91,8 @@ def main():
         ('/get/(.*)', Get),
         ('/static/web.css', Static)
     ], debug=True)
-    #static_media_server = webapp2.DirectoryApp("/static")
-    #app = Cascade([static_media_server, app])
+    static_media_server = StaticURLParser("static/")
+    app = Cascade([static_media_server, app])
     httpserver.serve(app, host='127.0.0.1', port='8080')
 
 
