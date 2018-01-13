@@ -29,10 +29,11 @@ def file(filename):
   """interpret.file(fname) -> parses it into pages and a KB."""
   pages = {}
   big_kb = {}  # type: kb.KBDict
+  context = Context(big_kb)
   with codecs.open(filename, encoding='utf-8') as f:
     # disabling mypy for this line because it thinks f isn't iterable (but it is)
     for (title, lines) in split.strings(f):  # type: ignore
-      nfo = info(parse.strings(lines), page=title)
+      nfo = info(parse.strings(lines), page=title, context=context)
       pages[title] = nfo
       nkb = nfo.kb()
       if '' in nkb:
@@ -41,7 +42,31 @@ def file(filename):
         if '' in nkb[title]:
           del nkb[title]['']
       big_kb = kb.merge([big_kb, nkb])
-  return (pages, KB(big_kb))
+  final = KB(big_kb)
+  context.big_kb = final
+  # context.debug = True
+  return (pages, final)
+
+class Context(object):
+  def __init__(self, kb):
+    self.big_kb = kb
+    self.debug = False
+
+no_context = Context({})
+
+
+def linkify(word, kb):
+    # exact match?
+    if word in kb:
+      return Markup('<a href="{0}">{0}</a>').format(word)
+    # substring match? (TODO: in word length reverse order)
+    for k in kb.keys():
+      i = word.find(k)
+      if i<0: continue
+      prefix = word[:i]
+      suffix = word[i+len(k):]
+      word = prefix + Markup('<a href="{0}">{0}</a>').format(k) + suffix
+    return word
 
 
 class InfoToken(object):
@@ -66,17 +91,17 @@ class InfoToken(object):
         raise NotImplemented()
 
 
-def info(token, page=''):
-  # type: (Any, str) -> InfoToken
+def info(token, page='', context=no_context):
+  # type: (Any, str, Context) -> InfoToken
   """token or string -> InfoToken"""
   if not isinstance(token, Tagged):
-    return StringToken(token)
+    return StringToken(token, context)
   tag = token.tag.lower()
   if tag=='table':
-    return Table(token)
+    return Table(token, page, context)
   if tag=='instance-table':
-    return InstanceTable(token, page)
-  return TagsAreWebOK(token, page)
+    return InstanceTable(token, page, context)
+  return TagsAreWebOK(token, page, context)
 
 
 def split_contents(contents, substring='\n'):
@@ -128,14 +153,20 @@ def split_all(contents, substring='\n'):
 
 
 class StringToken(InfoToken):
-  def __init__(self, txt):
+  def __init__(self, txt, context):
     self._text = str(txt)
     self._tag = ''
     self._value = parse.unit_perhaps(txt)
+    self._root = {}
+    self._ctx = context
   def text(self):
     return self._text
   def html(self):
-    return self._text
+    root_kb = self._ctx.big_kb
+    # print '"' + self._text + '" ' + str(self._text in root_kb) + " " + (str(root_kb.keys()))
+    ret = linkify(self._text, root_kb)
+    if self._ctx.debug: ret = 'StringToken[' + ret + ']'
+    return ret
   def value(self):
     return self._value
   def kb(self):
@@ -152,11 +183,12 @@ class Table(InfoToken):
   Bob, 25
   Charlie, 22
   """
-  def __init__(self, thetagged, page=''): # the tagged that holds the table, that is
+  def __init__(self, thetagged, page='', context=no_context): # the tagged that holds the table, that is
     # page that we're interpreting
     self._page = page
     self._tag = ''
     self._value = None
+    self._ctx = context
     title, rest = split_contents(thetagged.contents)
     self._title_contents = title
     header, rest = split_contents(rest)
@@ -175,28 +207,34 @@ class Table(InfoToken):
       ret = ret + '\n' + ''.join([info(x).text() for x in row_contents])
     return ret
   def html(self):
-    title_line = ''.join([info(x).html() for x in self._title_contents])
+    title_line = ''
+    for x in [info(x, context=self._ctx).html() for x in self._title_contents]:
+      title_line += x
     ret = title_line
     ret += Markup('\n<table border="1" style="border-collapse: collapse;">')
     ret += Markup('\n  <tr>')
     header = split_all(self._header_contents, ',')
     for h in header:
       # h is a content list
-      h_html = ''.join(info(x).html() for x in h) 
+      h_html = ''
+      for x in h:
+        h_html += info(x, context=self._ctx).html()
       ret += Markup('<th>{0}</th>').format(h_html)
     ret += Markup('</tr>')
     for row_contents in self._rows_contents:
       row = split_all(row_contents, ',')
       ret += Markup('\n  <tr>')
       for r in row:
-        r_html = ''.join(info(x).html() for x in r) 
+        r_html = ''
+        for x in r:
+          r_html += info(x, context=self._ctx).html()
         ret += Markup('<td>{0}</td>').format(r_html)
       ret += Markup('</tr>')
     ret += Markup('\n</table>')
+    if self._ctx.debug: ret = 'Table[' + ret + ']'
     return ret
   def kb(self):
     return {}
-
 
 class InstanceTable(Table):
   """When the current page is a category, use this to add instances quickly.
@@ -244,9 +282,16 @@ class TagsAreWebOK(InfoToken):
     So for example `b(planet) becomes <b>planet</b>. Clearly this isn't always
     the best choice, but we have to start somewhere."""
     __metaclass__ = ABCMeta
-    def __init__(self, page, pagename=''):
+    def __init__(self, page, pagename='', context=no_context):
       self._page = pagename
+      self._page_contents = page
       self._kb={}
+      self._ctx = context
+      self._filled = False
+    def _fill(self):
+      page = self._page_contents
+      pagename = self._page
+      context = self._ctx
       if not isinstance(page, Tagged):
         self._tag=''
         self._text=str(page)
@@ -254,14 +299,16 @@ class TagsAreWebOK(InfoToken):
         self._value=page
       else:
         self._tag = page.tag
-        kids = [info(x, self._page) for x in page.contents]
+        kids = [info(x, self._page, context) for x in page.contents]
         self._text = ''.join([k.text() for k in kids])
         if len(kids)==1:
           # special case, keep the value
           self._value = kids[0].value()
         else:
           self._value = [k.value() for k in kids]
-        self._html = u''.join([k.html() for k in kids])
+        self._html = u''
+        for k in kids:
+          self._html += k.html()
         self._kb=kb.merge([x.kb() for x in kids if x.kb()])
         # page '' means "current page"
         # our tag is the attribute, and we store the value there.
@@ -279,14 +326,29 @@ class TagsAreWebOK(InfoToken):
             # normal case
             self._html = Markup(u'<%s>{0}</%s>' % (self._tag, self._tag)).format(soft_unicode(self._html))
     def text(self):
+      if not self._filled:
+        self._fill()
+        self._filled = True
       return self._text
     def html(self):
+      # the html changes if the context changes, and we don't know when that happens
+      # so we just recompute every time.
+      self._fill()
       return self._html
     def kb(self):
+      if not self._filled:
+        self._fill()
+        self._filled = True
       return self._kb
     def value(self):
+      if not self._filled:
+        self._fill()
+        self._filled = True
       return self._value
     def __str__(self):
+      if not self._filled:
+        self._fill()
+        self._filled = True
       return self.text()
 
 

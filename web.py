@@ -63,7 +63,10 @@ class Get(webapp2.RequestHandler):
             boom = None
             if page in pages: 
                 boom=pages[page]
+                # an attempt to make sure images don't bring in a scrollbar... doesn't work though.
+                self.response.write('<div width="100%">\n')
                 self.response.write(boom.html())
+                self.response.write('</div>\n')
             ks = set(kb.get(page, {}).keys())
             if boom: ks -= set(boom.kb().keys())
             if ks:
@@ -89,7 +92,7 @@ def main():
     app = webapp2.WSGIApplication([
         ('/', Hello),
         ('/get/(.*)', Get),
-        ('/static/web.css', Static)
+        #('/static/web.css', Static)
     ], debug=True)
     static_media_server = StaticURLParser("static/")
     app = Cascade([static_media_server, app])
