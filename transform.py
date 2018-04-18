@@ -47,8 +47,8 @@ def whoisa(whatitmustbe):
   """Page selector that picks targets that 'isa' the argument."""
   return lambda kb, src, tgt: whatitmustbe in getvalues(kb, tgt, 'isa')
 
-## Page rules: given the kb and a page.
-## Return the list of matching pages.
+## Page rules: given the kb and a page (source).
+## Return the list of matching pages (targets).
 PageRule = Callable[[KB_or_Dict, str], List[Any]]
 
 def the(attribute, pageselector=lambda kb, src, tgt: True):
@@ -57,6 +57,21 @@ def the(attribute, pageselector=lambda kb, src, tgt: True):
 
   if pageselector is set then only return values for pages that match it."""
   return lambda kb, k: [p for p in kb[k].get(attribute, []) if pageselector(kb, k, p)]
+
+def chain_inner(kb, k, attributes):
+  "from a page, return the set of pages obtained by following the attributes, in order."
+  candidates = set([k])
+  for at in attributes:
+    next = []
+    for src in candidates:
+      next += kb[src].get(at,[])
+    candidates = set(next)
+  return candidates
+
+def chain(attributes, pageselector=lambda kb, src, tgt: True):
+  # type: (List[str], PageSelector) -> PageRule
+  """a rule that returns the pages that we arrive to after following the chain."""
+  return lambda kb, k: [p for p in chain_inner(kb, k, attributes) if pageselector(kb, k, p)]
 
 def hasa(attribute):
   # type: (str) -> PageRule

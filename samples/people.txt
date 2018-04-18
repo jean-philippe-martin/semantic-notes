@@ -4,6 +4,9 @@
 
 [Jill]
 `son(Bob)
+`brother(Ahab)
+
+[Ahab]
 
 [Bob]
 `mother(Jill)
