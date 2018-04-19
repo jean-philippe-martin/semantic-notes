@@ -59,13 +59,13 @@ def linkify(word, kb):
     # exact match?
     if word in kb:
       return Markup('<a href="{0}">{0}</a>').format(word)
-    # substring match? (TODO: in word length reverse order)
-    for k in kb.keys():
+    # substring match?
+    for k in sorted(kb.keys(), key=len, reverse=True):
       i = word.find(k)
       if i<0: continue
       prefix = word[:i]
       suffix = word[i+len(k):]
-      word = prefix + Markup('<a href="{0}">{0}</a>').format(k) + suffix
+      return linkify(prefix, kb) + Markup('<a href="{0}">{0}</a>').format(k) + linkify(suffix, kb)
     return word
 
 
@@ -163,8 +163,8 @@ class StringToken(InfoToken):
     return self._text
   def html(self):
     root_kb = self._ctx.big_kb
-    # print '"' + self._text + '" ' + str(self._text in root_kb) + " " + (str(root_kb.keys()))
     ret = linkify(self._text, root_kb)
+    # if ret != self._text: print "linkify: " + self._text + " -> " + ret
     if self._ctx.debug: ret = 'StringToken[' + ret + ']'
     return ret
   def value(self):

@@ -22,6 +22,7 @@ from markupsafe import Markup
 import sys
 import os
 from kb import unlist
+import people
 
 
 
@@ -49,20 +50,23 @@ def load(fname):
     global pages
     global kb
     pages,kb=interpret.file(fname)
+    # apply "people" rules
+    people.fixup(kb)
 
 
 def linkify(word):
     if word in pages or word in kb:
-        return Markup('<a href="{0}">{0}</a></li>\n').format(word)
+        return Markup('<a href="{0}">{0}</a>\n').format(word)
     return word
 
 class Get(webapp2.RequestHandler):
     def get(self, page=None):
-        if page and page in pages or page in kb:
+        key = kb.normalize_page(page)
+        if key and key in pages or page in kb:
             self.response.write(Markup('<h1>{0}</h1>\n').format(page))
             boom = None
-            if page in pages: 
-                boom=pages[page]
+            if key in pages: 
+                boom=pages[key]
                 # an attempt to make sure images don't bring in a scrollbar... doesn't work though.
                 self.response.write('<div width="100%">\n')
                 self.response.write(boom.html())
@@ -72,12 +76,16 @@ class Get(webapp2.RequestHandler):
             if ks:
                 self.response.write('<ul>\n')
                 for k in ks:
-                    self.response.write(Markup('<li>{0}: {1}</li>\n').format(k, linkify(str(unlist(kb[page][k])))))
+                    self.response.write(Markup('<li>{0}: ').format(k))
+                    for kx in kb[page][k]:
+                        self.response.write(linkify(str(kx)) + ' ')
+                    self.response.write(Markup('</li>\n'))
+
                 self.response.write('</ul>\n')
         else:
             # show an index
             self.response.write('<ul>\n')
-            for k in pages.keys():
+            for k in sorted(pages.keys(), key=lambda f: f.upper()):
                 self.response.write(Markup('<li><a href="{0}">{0}</a></li>\n').format(k))
             self.response.write('</ul>\n')
 
