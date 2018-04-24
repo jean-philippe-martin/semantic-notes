@@ -8,7 +8,7 @@ class TestPeople(unittest.TestCase):
 
   def test_people(self):
     # load the data
-    pages, kb = interpret.file('samples/people.txt')
+    pages, kb = interpret.file('testdata/people.txt')
     people.fixup(kb)
     # inferred from the fact he's a son
     self.assertTrue('man' in kb['Bob']['isa'])

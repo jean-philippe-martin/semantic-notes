@@ -13,7 +13,7 @@ class TestPlanets(unittest.TestCase):
     # shorthand
     kg = units.kg
     # load the data
-    pages, kb = interpret.file('samples/planets.txt')
+    pages, kb = interpret.file('testdata/planets.txt')
     # The KB holds the quantities with units, so we can combine them
     # meaningfully even though one is in kg and the other in "earth_mass".
     got = unique(kb['the earth']['mass']) + unique(kb['mars']['mass'])
@@ -23,7 +23,7 @@ class TestPlanets(unittest.TestCase):
     # shorthand
     kg = units.kg
     # load the data
-    pages, kb = interpret.file('samples/planets.txt')
+    pages, kb = interpret.file('testdata/planets.txt')
     # grab everything that's a planet
     planets = graph.ancestors(kb, 'isa', 'planet')
     # sum their mass
@@ -74,10 +74,10 @@ class TestPlanets(unittest.TestCase):
     self.assertEquals(len(parts), 3)
     foo=['', 'name,parent,parent']
     parts = interpret.split_all(foo, ',')
-    self.assertEquals(parts, [['','name'], ['parent'], ['parent']])
+    self.assertEquals(parts, [['', 'name'], ['parent'], ['parent']])
 
   def test_table(self):
-    p,kb=interpret.file('samples/table.txt')
+    p,kb=interpret.file('testdata/table.txt')
     html = p['table demo'].html()
     self.assertTrue('<td>' in html)
     self.assertTrue('<th>' in html)

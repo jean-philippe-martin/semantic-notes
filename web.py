@@ -46,10 +46,10 @@ pages=None
 kb=None
 
 
-def load(fname):
+def load(fnames):
     global pages
     global kb
-    pages,kb=interpret.file(fname)
+    pages,kb=interpret.files(fnames)
     # apply "people" rules
     people.fixup(kb)
 
@@ -77,8 +77,9 @@ class Get(webapp2.RequestHandler):
                 self.response.write('<ul>\n')
                 for k in ks:
                     self.response.write(Markup('<li>{0}: ').format(k))
-                    for kx in kb[page][k]:
-                        self.response.write(linkify(str(kx)) + ' ')
+                    #for kx in kb[page][k]:
+                    #    self.response.write(linkify(str(kx)) + ' ')
+                    self.response.write(', '.join(linkify(str(kx)) for kx in kb[page][k]))
                     self.response.write(Markup('</li>\n'))
 
                 self.response.write('</ul>\n')
@@ -93,10 +94,10 @@ class Get(webapp2.RequestHandler):
 def main():
     if len(sys.argv)<2:
         print 'Usage:'
-        print 'python web.py <file name>'
+        print 'python web.py <file names>'
         return
     fname = sys.argv[1]
-    load(sys.argv[1])
+    load(sys.argv[1:])
     app = webapp2.WSGIApplication([
         ('/', Hello),
         ('/get/(.*)', Get),

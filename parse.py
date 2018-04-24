@@ -96,12 +96,23 @@ class Tagged:
             return '`'+self.tag + '(' + inner + ')'
         return '`%s %s`/ ' % (self.tag, inner)
 
+    def inside(self):
+        # type: () -> str
+        """What's inside the tag."""
+        return ''.join(str(x) for x in self.contents)
+
 
 def unit_perhaps(txt):
     # type: (str) -> Any
     """Return a Pint Quantity if we recognize a unit, or pass through unchanged."""
     try:
-        txt = units.parse_expression(txt)
+        asunit = units.parse_expression(txt)
+        # their parse also computes expressions, like "1+2" (and stores 3).
+        # We don't want that because phone numbers look like expressions, but
+        # are not. Also, "" is parsed into a unitless 1 and we don't want that
+        # either.
+        if not asunit.unitless:
+            txt = asunit
     except:
         pass
     return txt

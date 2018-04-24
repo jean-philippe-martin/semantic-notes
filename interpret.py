@@ -23,31 +23,37 @@ from markupsafe import soft_unicode
 from typing import List, Iterable, Dict, Set, Union, Tuple, Any
 from collections import defaultdict
 
-
 def file(filename):
-  # type: (str) -> Tuple[Dict[str,InfoToken], KB]
   """interpret.file(fname) -> parses it into pages and a KB."""
+  return files([filename])
+
+def files(list_of_filenames):
+  # type: (str) -> Tuple[Dict[str,InfoToken], KB]
+  """interpret.files(["foo.txt", "bar.txt") -> parses them into pages and a KB."""
   pages = {}
   big_kb = {}  # type: kb.KBDict
   context = Context(big_kb)
-  with codecs.open(filename, encoding='utf-8') as f:
-    # disabling mypy for this line because it thinks f isn't iterable (but it is)
-    for (title, lines) in split.strings(f):  # type: ignore
-      nfo = info(parse.strings(lines), page=title, context=context)
-      pages[title] = nfo
-      nkb = nfo.kb()
-      if '' in nkb:
-        nkb[title] = nkb['']
-        del nkb['']
-        if '' in nkb[title]:
-          del nkb[title]['']
-      big_kb = kb.merge([big_kb, nkb])
+  for filename in list_of_filenames:
+    print("Loading %s" % filename)
+    with codecs.open(filename, encoding='utf-8') as f:
+      # disabling mypy for this line because it thinks f isn't iterable (but it is)
+      for (title, lines) in split.strings(f):  # type: ignore
+        nfo = info(parse.strings(lines), page=title, context=context)
+        pages[title] = nfo
+        nkb = nfo.kb()
+        if '' in nkb:
+          nkb[title] = nkb['']
+          del nkb['']
+          if '' in nkb[title]:
+            del nkb[title]['']
+        big_kb = kb.merge([big_kb, nkb])
   final = KB(big_kb)
   context.big_kb = final
   # context.debug = True
   return (pages, final)
 
 class Context(object):
+  "Context holds a reference to the KB, and optionally the page the info's about."
   def __init__(self, kb):
     self.big_kb = kb
     self.debug = False
@@ -101,6 +107,8 @@ def info(token, page='', context=no_context):
     return Table(token, page, context)
   if tag=='instance-table':
     return InstanceTable(token, page, context)
+  if tag=='attribute':
+    return Attribute(token, page, context)
   return TagsAreWebOK(token, page, context)
 
 
@@ -135,6 +143,7 @@ def split_all(contents, substring='\n'):
   current = []  # type: List[Any]
   for x in contents:
     if isinstance(x, str) or isinstance(x, unicode):      
+      #if len(x)==0: continue
       idx = x.find(substring)
       if idx<0:
         current.append(x)
@@ -172,6 +181,28 @@ class StringToken(InfoToken):
   def kb(self):
     return {}
 
+class Attribute(InfoToken):
+  """A lookup command, for an attribute."""
+  def __init__(self, thetagged, page='', context=no_context): # the tagged that holds the table, that is
+    # page that we're interpreting
+    self._page = page
+    self._tagged = thetagged
+    self._value = None
+    self._attribute = thetagged.contents[0]
+    self._ctx = context
+  def kb(self):
+    return {}
+  def value(self):
+    return None
+  def text(self):
+    if len(self._page)<1:
+      # no page specified, perhaps this is a header: output the tag
+      return str(self._tagged)
+    d = self._ctx.big_kb.get(self._page, {})
+    if len(d)<1: return "?"
+    return kb.unlist(d.get(self._attribute, "?"))
+  def html(self):
+    return Markup('{0}').format(self.text())
 
 class Table(InfoToken):
   """The info, represented as a table.
@@ -214,6 +245,7 @@ class Table(InfoToken):
     ret += Markup('\n<table border="1" style="border-collapse: collapse;">')
     ret += Markup('\n  <tr>')
     header = split_all(self._header_contents, ',')
+    is_special = [ any(isinstance(x, Tagged) and x.tag=='attribute' for x in h) for h in header ]
     for h in header:
       # h is a content list
       h_html = ''
@@ -223,11 +255,22 @@ class Table(InfoToken):
     ret += Markup('</tr>')
     for row_contents in self._rows_contents:
       row = split_all(row_contents, ',')
+      # skip empty row, don't even add attributes,
+      # because that's probably the final empty line.
+      if len(row)==0: continue
       ret += Markup('\n  <tr>')
-      for r in row:
+      extras = len(header) - len(row)
+      padded_row = row + [''] * extras 
+      for i, r in enumerate(padded_row):
         r_html = ''
-        for x in r:
-          r_html += info(x, context=self._ctx).html()
+        if is_special[i]:
+          for h in header[i]:
+            if isinstance(h, Tagged):
+              page=''.join(info(r).html() for r in row[0])
+              r_html += info(h, page=page, context=self._ctx).html()
+        else:
+          for x in r:
+            r_html += info(x, context=self._ctx).html()
         ret += Markup('<td>{0}</td>').format(r_html)
       ret += Markup('</tr>')
     ret += Markup('\n</table>')
@@ -257,7 +300,7 @@ class InstanceTable(Table):
   def kb(self):
     ret = {}
     header_components = split_all(self._header_contents, ',')
-    headers = [''.join(h).strip() for h in header_components]
+    headers = [''.join(info(h).text() for h in col).strip() for col in header_components]
     for row_contents in self._rows_contents:
       row_components = split_all(row_contents, ',')
       row = [''.join([info(x).text() for x in cl]).strip() for cl in row_components]
