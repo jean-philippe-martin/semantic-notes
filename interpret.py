@@ -109,6 +109,8 @@ def info(token, page='', context=no_context):
     return InstanceTable(token, page, context)
   if tag=='attribute':
     return Attribute(token, page, context)
+  if tag=='img':
+    return Image(token, page, context)
   return TagsAreWebOK(token, page, context)
 
 
@@ -319,6 +321,40 @@ class InstanceTable(Table):
     return ret
     
 
+class Image(InfoToken):
+    """img tag: `img(foo.jpg) or `img(width=50%,foo.jpg)"""
+    __metaclass__ = ABCMeta
+    def __init__(self, page, pagename='', context=no_context):
+      self._page = pagename
+      tags=str(''.join(page.contents)).split(',')
+      self._attrs={}
+      for pair in tags:
+        elems = pair.split('=',1)
+        k=elems[0]
+        if len(elems)>1:
+          self._attrs[k]=elems[1]
+        else:
+          self._attrs['src']=k
+      if 'src' in self._attrs:
+        self._attrs['src'] = '/static/' + self._attrs['src']
+      self._kb={}
+      self._ctx = context
+    def text(self):
+      return '(image)'
+    def __str__(self):
+      return self.text()
+    def html(self):
+      return Markup(u'<img %s>' % soft_unicode(
+          ' '.join(['%s="%s"' % (k,v) for k,v in self._attrs.items()])))
+    def kb(self):
+      return {}
+    def value(self):
+      # when we find we need a value, we'll also know which
+      # one is appropriate.
+      return None
+    
+
+
 class TagsAreWebOK(InfoToken):
     """Here we're transforming any tag into an html tag.
 
@@ -364,7 +400,8 @@ class TagsAreWebOK(InfoToken):
             # image, special case.
             # static content is held in "static/"
             # (as opposed to "data" which holds data we don't serve)
-            self._html = Markup(u'<%s width="100%%" src="/static/{0}">' % (self._tag)).format(soft_unicode(self._html))
+            #self._html = Markup(u'<%s width="100%%" src="/static/{0}">' % (self._tag)).format(soft_unicode(self._html))
+            self._html = Markup(u'<%s width="50px" src="/static/{0}">' % (self._tag)).format(soft_unicode(self._html))
           else:
             # normal case
             self._html = Markup(u'<%s>{0}</%s>' % (self._tag, self._tag)).format(soft_unicode(self._html))

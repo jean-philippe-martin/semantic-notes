@@ -83,6 +83,16 @@ class TestPlanets(unittest.TestCase):
     self.assertTrue('<th>' in html)
     self.assertTrue('<table' in html)
 
+  def test_image(self):
+    p,kb=interpret.file('testdata/img.txt')
+    html = p['basic image'].html()
+    self.assertTrue('<img' in html)
+    self.assertTrue('src="foo.jpg"' in html)
+    html = p['image with width'].html()
+    self.assertTrue('<img' in html)
+    self.assertTrue('width="50%"' in html)
+    self.assertTrue('src="foo.jpg"' in html)
+
   def test_instance_table(self):
     p,kb=interpret.file('testdata/instancetable.txt')
     html = p['Planet'].html()

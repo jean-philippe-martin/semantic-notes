@@ -1,0 +1,5 @@
+[basic image]
+`img(foo.jpg)
+
+[image with width]
+`img(width=50%,foo.jpg)
